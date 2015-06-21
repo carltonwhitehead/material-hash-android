@@ -1,2 +1,2 @@
 # material-hash-android
-a hash calculator app for Android with material design
+A hash calculator app for Android with Material design
