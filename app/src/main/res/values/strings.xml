@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Material Hash</string>
+    <string name="algorithms_card_title">Algorithm</string>
+    <string name="algorithms_card_spinner_hint">Select an algorithm</string>
+    <string name="algorithms_card_spinner_floating_label_text">Algorithm</string>
 </resources>

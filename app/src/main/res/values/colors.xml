@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Named color declarations -->
+    <color name="nearLaPalmaGreen">#388e3c</color>
+    <color name="nearFruitSaladGreen">#4caf50</color>
+    <color name="nearGrannyApple">#c8e6c9</color>
+    <color name="white">#ffffff</color>
+    <color name="nearPortlandOrange">#ff5722</color>
+    <color name="nearNero">#212121</color>
+    <color name="nearDoveGrey">#727272</color>
+    <color name="nearLoblollySilver">#b6b6b6</color>
+</resources>

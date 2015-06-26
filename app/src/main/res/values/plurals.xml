@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="algorithms_card_title">
+        <item quantity="one">Algorithm</item>
+        <item quantity="other">Algorithms</item>
+    </plurals>
+</resources>
