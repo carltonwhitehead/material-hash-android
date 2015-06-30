@@ -5,9 +5,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
+import org.spongycastle.jce.provider.BouncyCastleProvider;
+
 import java.security.MessageDigest;
+import java.security.Provider;
 import java.security.Security;
 import java.util.List;
+import java.util.Set;
 
 import rx.Observable;
 
@@ -20,12 +24,13 @@ public class HashAlgorithmsGateway {
     }
 
     public List<HashAlgorithm> buildAvailableHashAlgorithms() {
-        List<String> availableHashAlgorithmNames = Lists.newArrayList(
-                Security.getAlgorithms(MessageDigest.class.getSimpleName())
-        );
+        Provider spongyBouncyCastleProvider = Security.getProvider(BouncyCastleProvider.PROVIDER_NAME);
+        Set<Provider.Service> services = spongyBouncyCastleProvider.getServices();
         ImmutableList.Builder<HashAlgorithm> availableHashAlgorithmsBuilder = ImmutableList.builder();
-        for (String algorithm : availableHashAlgorithmNames) {
-            availableHashAlgorithmsBuilder.add(new HashAlgorithm(algorithm));
+        for (Provider.Service service : services) {
+            if (MessageDigest.class.getSimpleName().equals(service.getType())) {
+                availableHashAlgorithmsBuilder.add(new HashAlgorithm(service.getAlgorithm()));
+            }
         }
         return Ordering.natural().immutableSortedCopy(availableHashAlgorithmsBuilder.build());
     }
