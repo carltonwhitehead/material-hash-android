@@ -1,8 +1,7 @@
 package com.cebesius.materialhash.util;
 
-import com.cebesius.materialhash.domain.HashAlgorithm;
+import com.cebesius.materialhash.domain.entity.HashAlgorithm;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
 import org.spongycastle.jce.provider.BouncyCastleProvider;

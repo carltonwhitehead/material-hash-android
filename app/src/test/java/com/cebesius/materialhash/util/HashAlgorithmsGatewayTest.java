@@ -1,6 +1,6 @@
 package com.cebesius.materialhash.util;
 
-import com.cebesius.materialhash.domain.HashAlgorithm;
+import com.cebesius.materialhash.domain.entity.HashAlgorithm;
 
 import org.junit.AfterClass;
 import org.junit.Before;

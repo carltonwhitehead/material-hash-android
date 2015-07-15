@@ -1,58 +1,65 @@
 package com.cebesius.materialhash.activity;
 
-import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
-import android.os.Build;
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
+import android.text.format.Formatter;
 import android.view.View;
-import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.cebesius.materialhash.R;
-import com.cebesius.materialhash.domain.HashAlgorithm;
-import com.cebesius.materialhash.mvp.HashAlgorithmsModelImpl;
-import com.cebesius.materialhash.mvp.HashAlgorithmsPresenter;
-import com.cebesius.materialhash.mvp.HashAlgorithmsView;
+import com.cebesius.materialhash.domain.boundary.FileBoundary;
+import com.cebesius.materialhash.domain.entity.File;
+import com.cebesius.materialhash.domain.entity.HashAlgorithm;
+import com.cebesius.materialhash.fragment.SingleChoiceDialogFragment;
+import com.cebesius.materialhash.mvp.HashOperationModelImpl;
+import com.cebesius.materialhash.mvp.HashOperationPresenter;
+import com.cebesius.materialhash.mvp.HashOperationView;
+import com.cebesius.materialhash.util.BusSingleton;
 import com.cebesius.materialhash.util.HashAlgorithmsGateway;
 import com.cebesius.materialhash.util.rx.AppRxSchedulers;
 import com.cebesius.materialhash.util.rx.RxSchedulers;
-import com.google.common.collect.ImmutableList;
-import com.nineoldandroids.animation.AnimatorSet;
+import com.squareup.otto.Bus;
+import com.squareup.otto.Subscribe;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import fr.ganfra.materialspinner.MaterialSpinner;
+import butterknife.OnClick;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity implements HashAlgorithmsView {
+public class MainActivity extends AppCompatActivity implements HashOperationView {
+
+    private static final int REQUEST_CODE_PICK_INPUT_FILE = 0;
+    private static final String FRAGMENT_TAG_ALGORITHM_CHOICE = "algorithmChoice";
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
     @InjectView(R.id.scroll_view)
     ScrollView scrollView;
+    @InjectView(R.id.file_card)
+    CardView fileCard;
+    @InjectView(R.id.file_input)
+    TextView fileInput;
+    @InjectView(R.id.file_input_size)
+    TextView fileInputSize;
     @InjectView(R.id.algorithms_card)
     CardView algorithmsCard;
-    @InjectView(R.id.algorithms_card_spinner)
-    MaterialSpinner algorithmsSpinner;
+    @InjectView(R.id.algorithms_input)
+    TextView algorithmsInput;
 
-    private HashAlgorithmsMvpTriad hashAlgorithmsMvp;
-    private ArrayAdapter<HashAlgorithm> hashAlgorithmsSpinnerAdapter;
+    private RxSchedulers rxSchedulers = new AppRxSchedulers();
+    private Bus bus;
+    private HashAlgorithmsMvpTriad hashOperationsMvp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +67,13 @@ public class MainActivity extends AppCompatActivity implements HashAlgorithmsVie
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
 
+        initBus();
         initToolbar();
         initHashAlgorithmsMvp(savedInstanceState);
+    }
+
+    private void initBus() {
+        bus = BusSingleton.getInstance();
     }
 
     private void initToolbar() {
@@ -69,37 +81,53 @@ public class MainActivity extends AppCompatActivity implements HashAlgorithmsVie
     }
 
     private void initHashAlgorithmsMvp(Bundle savedInstanceState) {
-        hashAlgorithmsMvp = new HashAlgorithmsMvpTriad();
+        hashOperationsMvp = new HashAlgorithmsMvpTriad();
         if (savedInstanceState != null) {
-            hashAlgorithmsMvp.model.restoreState(savedInstanceState);
+            hashOperationsMvp.model.restoreState(savedInstanceState);
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        hashAlgorithmsMvp.presenter.start();
-        hashAlgorithmsMvp.model.start();
+        bus.register(this);
+        hashOperationsMvp.presenter.start();
+        hashOperationsMvp.model.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        hashAlgorithmsMvp.presenter.stop();
-        hashAlgorithmsMvp.model.stop();
+        hashOperationsMvp.presenter.stop();
+        hashOperationsMvp.model.stop();
+        bus.unregister(this);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        hashOperationsMvp.model.saveState(outState);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_CODE_PICK_INPUT_FILE:
+                onInputFilePicked(resultCode, data);
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
     public void showAvailableHashAlgorithms(List<HashAlgorithm> hashAlgorithms) {
-        hashAlgorithmsSpinnerAdapter = new ArrayAdapter<>(
-            MainActivity.this,
-            android.R.layout.simple_spinner_item,
-            hashAlgorithms
-        );
-        hashAlgorithmsSpinnerAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
-        algorithmsSpinner.setAdapter(hashAlgorithmsSpinnerAdapter);
-        algorithmsSpinner.setOnItemSelectedListener(algorithmsSpinnerItemSelectedListener);
         algorithmsCard.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void revealAvailableHashAlgorithms(List<HashAlgorithm> hashAlgorithms) {
+        showAvailableHashAlgorithms(hashAlgorithms);
         long animationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
         TimeInterpolator interpolator = new AccelerateDecelerateInterpolator(this, null);
         ObjectAnimator animateTranslationY = ObjectAnimator.ofFloat(
@@ -122,34 +150,96 @@ public class MainActivity extends AppCompatActivity implements HashAlgorithmsVie
         animateRotation.start();
     }
 
-    private final AdapterView.OnItemSelectedListener algorithmsSpinnerItemSelectedListener =
-        new AdapterView.OnItemSelectedListener() {
-        @Override
-        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            if (position < 0) {
-                return;
-            }
-            HashAlgorithm hashAlgorithm = hashAlgorithmsSpinnerAdapter.getItem(position);
-            hashAlgorithmsMvp.presenter.onUserSelectedHashAlgorithm(hashAlgorithm);
-        }
+    @Override
+    public void setOperationHashAlgorithm(HashAlgorithm hashAlgorithm) {
+        algorithmsInput.setText(hashAlgorithm.getLabel());
+    }
 
-        @Override
-        public void onNothingSelected(AdapterView<?> parent) {
-            hashAlgorithmsMvp.presenter.onUserSelectedHashAlgorithm(null);
+    @Subscribe
+    public void onSingleChoiceDialogFragmentChoiceEvent(SingleChoiceDialogFragment.ChoiceEvent event) {
+        switch (event.getTag()) {
+            case FRAGMENT_TAG_ALGORITHM_CHOICE:
+                int checkedItem = event.getCheckedItem();
+                List<HashAlgorithm> hashAlgorithms = hashOperationsMvp.model.getAvailableHashAlgorithms();
+                HashAlgorithm hashAlgorithm = hashAlgorithms.get(checkedItem);
+                hashOperationsMvp.presenter.onUserSelectedHashAlgorithm(hashAlgorithm);
+                break;
         }
-    };
+    }
+
+    @OnClick(R.id.file_input)
+    public void onFileInputClicked() {
+        hashOperationsMvp.presenter.onUserRequestingShowFilePicker();
+    }
+
+    @Override
+    public void showFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        startActivityForResult(intent, REQUEST_CODE_PICK_INPUT_FILE);
+    }
+
+    private void onInputFilePicked(int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            return;
+        }
+        FileBoundary fileBoundary = new FileBoundary(getContentResolver());
+        File file = fileBoundary.toEntity(data);
+        hashOperationsMvp.presenter.onUserSelectedFile(file);
+    }
+
+    @Override
+    public void onFileSet(File file) {
+        fileInput.setText(file.getDisplayName());
+        fileInputSize.setText(Formatter.formatShortFileSize(this, file.getSize()));
+    }
+
+    @OnClick(R.id.algorithms_input)
+    public void onAlgorithmsInputClicked() {
+        hashOperationsMvp.presenter.onUserRequestingShowAlgorithmsPicker();
+    }
+
+    @Override
+    public void showOperationHashAlgorithmPicker(
+        List<HashAlgorithm> availableHashAlgorithms,
+        HashAlgorithm operationHashAlgorithm
+    ) {
+        Observable<SingleChoiceDialogFragment> observable = Observable.create(
+            subscriber -> {
+                CharSequence[] items = new CharSequence[availableHashAlgorithms.size()];
+                int i = 0;
+                for (HashAlgorithm availableHashAlgorithm : availableHashAlgorithms) {
+                    items[i++] = availableHashAlgorithm.getLabel();
+                }
+                int checkedItem;
+                if (operationHashAlgorithm != null) {
+                    checkedItem = availableHashAlgorithms.indexOf(operationHashAlgorithm);
+                } else {
+                    checkedItem = SingleChoiceDialogFragment.CHECKED_ITEM_NONE;
+                }
+                SingleChoiceDialogFragment fragment = SingleChoiceDialogFragment.newInstance(
+                    items,
+                    checkedItem
+                );
+                subscriber.onNext(fragment);
+            }
+        );
+        observable.subscribeOn(rxSchedulers.computationThread())
+            .observeOn(rxSchedulers.mainThread())
+            .subscribe(fragment -> fragment.show(getSupportFragmentManager(), FRAGMENT_TAG_ALGORITHM_CHOICE));
+    }
 
     private class HashAlgorithmsMvpTriad {
 
-        private final HashAlgorithmsModelImpl model;
-        private final HashAlgorithmsView view;
-        private final HashAlgorithmsPresenter presenter;
+        private final HashOperationModelImpl model;
+        private final HashOperationView view;
+        private final HashOperationPresenter presenter;
 
         private HashAlgorithmsMvpTriad() {
-            RxSchedulers rxSchedulers = new AppRxSchedulers();
-            this.model = new HashAlgorithmsModelImpl(rxSchedulers, new HashAlgorithmsGateway());
+            this.model = new HashOperationModelImpl(rxSchedulers, new HashAlgorithmsGateway());
             this.view = MainActivity.this;
-            this.presenter = new HashAlgorithmsPresenter(model, view, rxSchedulers);
+            this.presenter = new HashOperationPresenter(model, view, rxSchedulers);
         }
     }
 }

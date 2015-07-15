@@ -1,5 +1,13 @@
 <resources>
 
+    <style name="Widget"></style>
 
+    <style name="Widget.MaterialHash"></style>
+
+    <style name="Widget.MaterialHash.MaterialSpinner">
+        <item name="colorControlNormal">@color/nearLaPalmaGreen</item>
+        <item name="colorAccent">@color/nearGrannyApple</item>
+        <item name="ms_thickness">0.67dp</item>
+    </style>
 
 </resources>

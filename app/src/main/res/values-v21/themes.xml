@@ -2,14 +2,36 @@
 <resources>
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:colorPrimary">@color/nearFruitSaladGreen</item>
+        <item name="colorPrimary">@color/nearFruitSaladGreen</item>
+
         <item name="android:colorPrimaryDark">@color/nearLaPalmaGreen</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="colorPrimaryDark">@color/nearLaPalmaGreen</item>
+
+        <item name="android:textColor">@color/nearNero</item>
+
         <item name="android:colorAccent">@color/nearPortlandOrange</item>
+        <item name="colorAccent">@color/nearPortlandOrange</item>
+
         <item name="android:textColorPrimary">@color/nearNero</item>
+
         <item name="android:textColorSecondary">@color/nearDoveGrey</item>
+
+        <item name="android:colorControlNormal">@color/nearFruitSaladGreen</item>
+        <item name="colorControlNormal">@color/nearFruitSaladGreen</item>
+
+        <item name="android:colorControlHighlight">@color/nearGrannyApple</item>
+        <item name="colorControlHighlight">@color/nearGrannyApple</item>
+
+        <item name="android:colorControlActivated">@color/nearLaPalmaGreen</item>
+        <item name="colorControlActivated">@color/nearLaPalmaGreen</item>
+
         <item name="android:divider">@color/nearLoblollySilver</item>
         <item name="android:spinnerItemStyle">@style/AppTheme.Widget.SpinnerItem</item>
         <item name="spinnerDropDownItemStyle">@style/AppTheme.Widget.SpinnerDropdownItem</item>
+    </style>
+
+    <style name="AppTheme.Widget.Spinner" parent="Widget.AppCompat.Spinner">
+
     </style>
 
     <style name="AppTheme.Widget.SpinnerItem" parent="Widget.AppCompat.TextView.SpinnerItem">
