@@ -1,5 +1,7 @@
 <resources>
 
+    <style name="Widget"></style>
 
+    <style name="Widget.MaterialHash"></style>
 
 </resources>

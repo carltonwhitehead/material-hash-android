@@ -1,4 +1,4 @@
-package com.cebesius.materialhash.domain;
+package com.cebesius.materialhash.domain.entity;
 
 import java.io.Serializable;
 
