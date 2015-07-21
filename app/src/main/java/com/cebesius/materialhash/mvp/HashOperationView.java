@@ -12,9 +12,9 @@ public interface HashOperationView extends View {
 
     void revealAvailableHashAlgorithms(List<HashAlgorithm> hashAlgorithms);
 
-    void showFilePicker();
+    void showOperationFilePicker();
 
-    void onFileSet(File file);
+    void setOperationFile(File file);
 
     void setOperationHashAlgorithm(HashAlgorithm hashAlgorithm);
 

@@ -95,7 +95,7 @@ public class HashOperationPresenterTest {
     @Test
     public void whenAvailableHashAlgorithmsFoundIfHasFileAndNotYetRevealedItShouldShowAvailable() {
         when(model.isAvailableHashAlgorithmsRevealed()).thenReturn(false);
-        when(model.hasFile()).thenReturn(true);
+        when(model.hasOperationFile()).thenReturn(true);
 
         presenter.onAvailableHashAlgorithmsFound(hashAlgorithms);
 
@@ -104,28 +104,28 @@ public class HashOperationPresenterTest {
     }
 
     @Test
-    public void whenUserRequestingShowAlgorithmsPickerItShouldShow() {
+    public void whenUserRequestingShowOperationHashAlgorithmPickerItShouldShow() {
         when(model.getAvailableHashAlgorithms()).thenReturn(hashAlgorithms);
         when(model.getOperationHashAlgorithm()).thenReturn(hashAlgorithm);
 
-        presenter.onUserRequestingShowAlgorithmsPicker();
+        presenter.onUserRequestingShowOperationHashAlgorithmPicker();
 
         verify(view).showOperationHashAlgorithmPicker(hashAlgorithms, hashAlgorithm);
     }
 
     @Test
-    public void whenUserRequestingShowFilePickerItShouldShow() {
-        presenter.onUserRequestingShowFilePicker();
+    public void whenUserRequestingShowOperationFilePickerItShouldShow() {
+        presenter.onUserRequestingShowOperationFilePicker();
 
-        verify(view).showFilePicker();
+        verify(view).showOperationFilePicker();
     }
 
     @Test
     public void whenUserSelectedFileItShouldSetFileAndPassBackToView() {
-        presenter.onUserSelectedFile(file);
+        presenter.onUserSelectedOperationFile(file);
 
-        verify(model).setFile(file);
-        verify(view).onFileSet(file);
+        verify(model).setOperationFile(file);
+        verify(view).setOperationFile(file);
     }
 
     @Test
@@ -134,7 +134,7 @@ public class HashOperationPresenterTest {
         when(model.hasAvailableHashAlgorithms()).thenReturn(true);
         when(model.getAvailableHashAlgorithms()).thenReturn(hashAlgorithms);
 
-        presenter.onUserSelectedFile(file);
+        presenter.onUserSelectedOperationFile(file);
 
         verify(view).revealAvailableHashAlgorithms(hashAlgorithms);
         verify(model).setAvailableHashAlgorithmsRevealed(true);

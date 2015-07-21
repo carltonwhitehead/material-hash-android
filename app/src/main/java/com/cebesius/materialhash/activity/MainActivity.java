@@ -11,7 +11,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.format.Formatter;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.AdapterView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -169,11 +168,11 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
 
     @OnClick(R.id.file_input)
     public void onFileInputClicked() {
-        hashOperationsMvp.presenter.onUserRequestingShowFilePicker();
+        hashOperationsMvp.presenter.onUserRequestingShowOperationFilePicker();
     }
 
     @Override
-    public void showFilePicker() {
+    public void showOperationFilePicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
@@ -186,18 +185,18 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
         }
         FileBoundary fileBoundary = new FileBoundary(getContentResolver());
         File file = fileBoundary.toEntity(data);
-        hashOperationsMvp.presenter.onUserSelectedFile(file);
+        hashOperationsMvp.presenter.onUserSelectedOperationFile(file);
     }
 
     @Override
-    public void onFileSet(File file) {
+    public void setOperationFile(File file) {
         fileInput.setText(file.getDisplayName());
         fileInputSize.setText(Formatter.formatShortFileSize(this, file.getSize()));
     }
 
     @OnClick(R.id.algorithms_input)
     public void onAlgorithmsInputClicked() {
-        hashOperationsMvp.presenter.onUserRequestingShowAlgorithmsPicker();
+        hashOperationsMvp.presenter.onUserRequestingShowOperationHashAlgorithmPicker();
     }
 
     @Override

@@ -21,17 +21,17 @@ public class HashOperationModelImpl extends BaseModel
         implements HashOperationModel {
 
     private static final String KEY_AVAILABLE_HASH_ALGORITHMS_REVEALED = "availableHashAlgorithmsRevealed";
-    private static final String KEY_HASH_ALGORITHMS = "hashAlgorithms";
-    private static final String KEY_OPERATION_HASH_ALGORITHM = "hashAlgorithm";
-    private static final String KEY_OPERATION_FILE = "file";
+    private static final String KEY_AVAILABLE_HASH_ALGORITHMS = "availableHashAlgorithms";
+    private static final String KEY_OPERATION_HASH_ALGORITHM = "operationHashAlgorithm";
+    private static final String KEY_OPERATION_FILE = "operationFile";
 
     private final RxSchedulers rxSchedulers;
     private final HashAlgorithmsGateway hashAlgorithmsGateway;
     private final BehaviorSubject<List<HashAlgorithm>> availableHashAlgorithmsSubject = BehaviorSubject.create();
     private Subscription findAvailableHashAlgorithmsSubscription;
     private boolean availableHashAlgorithmsRevealed;
-    private HashAlgorithm hashAlgorithm;
-    private File file;
+    private HashAlgorithm operationHashAlgorithm;
+    private File operationFile;
 
     public HashOperationModelImpl(RxSchedulers rxSchedulers, HashAlgorithmsGateway hashAlgorithmsGateway) {
         this.rxSchedulers = rxSchedulers;
@@ -78,27 +78,27 @@ public class HashOperationModelImpl extends BaseModel
 
     @Override
     public HashAlgorithm getOperationHashAlgorithm() {
-        return hashAlgorithm;
+        return operationHashAlgorithm;
     }
 
     @Override
     public void setOperationHashAlgorithm(HashAlgorithm hashAlgorithm) {
-        this.hashAlgorithm = hashAlgorithm;
+        this.operationHashAlgorithm = hashAlgorithm;
     }
 
     @Override
     public boolean hasOperationHashAlgorithm() {
-        return hashAlgorithm != null;
+        return operationHashAlgorithm != null;
     }
 
     @Override
-    public void setFile(File file) {
-        this.file = file;
+    public void setOperationFile(File file) {
+        this.operationFile = file;
     }
 
     @Override
-    public boolean hasFile() {
-        return file != null;
+    public boolean hasOperationFile() {
+        return operationFile != null;
     }
 
     @Override
@@ -117,19 +117,21 @@ public class HashOperationModelImpl extends BaseModel
     public void saveState(Bundle bundle) {
         bundle.putBoolean(KEY_AVAILABLE_HASH_ALGORITHMS_REVEALED, availableHashAlgorithmsRevealed);
         if (hasAvailableHashAlgorithms()) {
-            bundle.putSerializable(KEY_HASH_ALGORITHMS, (Serializable) availableHashAlgorithmsSubject.getValue());
+            bundle.putSerializable(KEY_AVAILABLE_HASH_ALGORITHMS, (Serializable) availableHashAlgorithmsSubject.getValue());
         }
-        bundle.putSerializable(KEY_OPERATION_HASH_ALGORITHM, hashAlgorithm);
-        bundle.putSerializable(KEY_OPERATION_FILE, file);
+        bundle.putSerializable(KEY_OPERATION_HASH_ALGORITHM, operationHashAlgorithm);
+        bundle.putSerializable(KEY_OPERATION_FILE, operationFile);
     }
 
     @Override
     public void restoreState(Bundle bundle) {
         availableHashAlgorithmsRevealed = bundle.getBoolean(KEY_AVAILABLE_HASH_ALGORITHMS_REVEALED);
-        if (bundle.containsKey(KEY_HASH_ALGORITHMS)) {
-            availableHashAlgorithmsSubject.onNext((List<HashAlgorithm>) bundle.getSerializable(KEY_HASH_ALGORITHMS));
+        if (bundle.containsKey(KEY_AVAILABLE_HASH_ALGORITHMS)) {
+            availableHashAlgorithmsSubject.onNext((List<HashAlgorithm>) bundle.getSerializable(
+                KEY_AVAILABLE_HASH_ALGORITHMS
+            ));
         }
-        hashAlgorithm = (HashAlgorithm) bundle.getSerializable(KEY_OPERATION_HASH_ALGORITHM);
-        file = (File) bundle.getSerializable(KEY_OPERATION_FILE);
+        operationHashAlgorithm = (HashAlgorithm) bundle.getSerializable(KEY_OPERATION_HASH_ALGORITHM);
+        operationFile = (File) bundle.getSerializable(KEY_OPERATION_FILE);
     }
 }

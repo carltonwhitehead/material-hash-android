@@ -41,7 +41,7 @@ public class HashOperationPresenter
     }
 
     void onAvailableHashAlgorithmsFound(List<HashAlgorithm> hashAlgorithms) {
-        if (!model.isAvailableHashAlgorithmsRevealed() && model.hasFile()) {
+        if (!model.isAvailableHashAlgorithmsRevealed() && model.hasOperationFile()) {
             view.revealAvailableHashAlgorithms(hashAlgorithms);
             model.setAvailableHashAlgorithmsRevealed(true);
         }
@@ -52,24 +52,24 @@ public class HashOperationPresenter
         view.setOperationHashAlgorithm(hashAlgorithm);
     }
 
-    public void onUserRequestingShowFilePicker() {
-        view.showFilePicker();
+    public void onUserRequestingShowOperationFilePicker() {
+        view.showOperationFilePicker();
     }
 
-    public void onUserRequestingShowAlgorithmsPicker() {
+    public void onUserRequestingShowOperationHashAlgorithmPicker() {
         view.showOperationHashAlgorithmPicker(
             model.getAvailableHashAlgorithms(),
             model.getOperationHashAlgorithm()
         );
     }
 
-    public void onUserSelectedFile(File file) {
-        model.setFile(file);
+    public void onUserSelectedOperationFile(File file) {
+        model.setOperationFile(file);
         if (!model.isAvailableHashAlgorithmsRevealed() && model.hasAvailableHashAlgorithms()) {
             view.revealAvailableHashAlgorithms(model.getAvailableHashAlgorithms());
             model.setAvailableHashAlgorithmsRevealed(true);
         }
-        view.onFileSet(file);
+        view.setOperationFile(file);
     }
 
     @Override

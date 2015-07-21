@@ -22,9 +22,9 @@ public interface HashOperationModel extends Model {
 
     boolean hasOperationHashAlgorithm();
 
-    void setFile(File file);
+    void setOperationFile(File file);
 
-    boolean hasFile();
+    boolean hasOperationFile();
 
     boolean isAvailableHashAlgorithmsRevealed();
 
