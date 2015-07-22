@@ -5,19 +5,27 @@ import android.animation.TimeInterpolator;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.text.format.Formatter;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.cebesius.materialhash.MaterialHashApp;
 import com.cebesius.materialhash.R;
 import com.cebesius.materialhash.domain.boundary.FileBoundary;
+import com.cebesius.materialhash.domain.boundary.HashOperationBoundary;
 import com.cebesius.materialhash.domain.entity.File;
 import com.cebesius.materialhash.domain.entity.HashAlgorithm;
+import com.cebesius.materialhash.domain.entity.HashOperation;
+import com.cebesius.materialhash.domain.interactor.HashOperationInteractor;
+import com.cebesius.materialhash.fragment.ObjectRetentionFragment;
 import com.cebesius.materialhash.fragment.SingleChoiceDialogFragment;
 import com.cebesius.materialhash.mvp.HashOperationModelImpl;
 import com.cebesius.materialhash.mvp.HashOperationPresenter;
@@ -26,9 +34,11 @@ import com.cebesius.materialhash.util.BusSingleton;
 import com.cebesius.materialhash.util.HashAlgorithmsGateway;
 import com.cebesius.materialhash.util.rx.AppRxSchedulers;
 import com.cebesius.materialhash.util.rx.RxSchedulers;
+import com.google.common.base.Optional;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -40,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
 
     private static final int REQUEST_CODE_PICK_INPUT_FILE = 0;
     private static final String FRAGMENT_TAG_ALGORITHM_CHOICE = "algorithmChoice";
+    private static final String FRAGMENT_TAG_OBJECT_RETENTION = "objectRetention";
+    private static final String RETENTION_KEY_HASH_OPERATIONS_MVP_MODEL = "hashOperationsMvp.model";
 
     @InjectView(R.id.toolbar)
     Toolbar toolbar;
@@ -55,10 +67,19 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
     CardView algorithmsCard;
     @InjectView(R.id.algorithms_input)
     TextView algorithmsInput;
+    @InjectView(R.id.operation_card)
+    CardView operationCard;
+    @InjectView(R.id.operation_start_button)
+    Button operationStartButton;
+    @InjectView(R.id.operation_progress)
+    ProgressBar operationProgress;
+    @InjectView(R.id.operation_result)
+    TextView operationResult;
 
-    private RxSchedulers rxSchedulers = new AppRxSchedulers();
+    private RxSchedulers rxSchedulers;
     private Bus bus;
     private HashAlgorithmsMvpTriad hashOperationsMvp;
+    private WeakReference<ObjectRetentionFragment> objectRetentionFragmentRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +87,36 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
 
+        initObjectRetentionFragment();
         initBus();
         initToolbar();
-        initHashAlgorithmsMvp(savedInstanceState);
+        initHashAlgorithmsMvp();
+    }
+
+    private void initObjectRetentionFragment() {
+        if (objectRetentionFragmentRef != null && objectRetentionFragmentRef.get() != null) {
+            return;
+        }
+        ObjectRetentionFragment objectRetentionFragment = (ObjectRetentionFragment) getSupportFragmentManager()
+            .findFragmentByTag(FRAGMENT_TAG_OBJECT_RETENTION);
+        if (objectRetentionFragment == null) {
+            objectRetentionFragment = new ObjectRetentionFragment();
+            getSupportFragmentManager().beginTransaction()
+                .add(objectRetentionFragment, FRAGMENT_TAG_OBJECT_RETENTION)
+                .commit();
+        }
+        objectRetentionFragmentRef = new WeakReference<>(objectRetentionFragment);
+    }
+
+    private ObjectRetentionFragment getObjectRetentionFragment() {
+        return objectRetentionFragmentRef.get();
+    }
+
+    private RxSchedulers getRxSchedulers() {
+        if (rxSchedulers == null) {
+            rxSchedulers = MaterialHashApp.getRxSchedulers();
+        }
+        return rxSchedulers;
     }
 
     private void initBus() {
@@ -79,11 +127,8 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
         setSupportActionBar(toolbar);
     }
 
-    private void initHashAlgorithmsMvp(Bundle savedInstanceState) {
+    private void initHashAlgorithmsMvp() {
         hashOperationsMvp = new HashAlgorithmsMvpTriad();
-        if (savedInstanceState != null) {
-            hashOperationsMvp.model.restoreState(savedInstanceState);
-        }
     }
 
     @Override
@@ -122,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
     @Override
     public void showAvailableHashAlgorithms(List<HashAlgorithm> hashAlgorithms) {
         algorithmsCard.setVisibility(View.VISIBLE);
+        algorithmsInput.requestFocus(View.FOCUS_DOWN);
     }
 
     @Override
@@ -158,12 +204,15 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
     public void onSingleChoiceDialogFragmentChoiceEvent(SingleChoiceDialogFragment.ChoiceEvent event) {
         switch (event.getTag()) {
             case FRAGMENT_TAG_ALGORITHM_CHOICE:
-                int checkedItem = event.getCheckedItem();
-                List<HashAlgorithm> hashAlgorithms = hashOperationsMvp.model.getAvailableHashAlgorithms();
-                HashAlgorithm hashAlgorithm = hashAlgorithms.get(checkedItem);
-                hashOperationsMvp.presenter.onUserSelectedHashAlgorithm(hashAlgorithm);
+                onUserSelectedOperationHashAlgorithm(event.getCheckedItem());
                 break;
         }
+    }
+
+    private void onUserSelectedOperationHashAlgorithm(int checkedItem) {
+        List<HashAlgorithm> availableHashAlgorithms = hashOperationsMvp.model.getAvailableHashAlgorithms().get();
+        HashAlgorithm hashAlgorithm = availableHashAlgorithms.get(checkedItem);
+        hashOperationsMvp.presenter.onUserSelectedOperationHashAlgorithm(hashAlgorithm);
     }
 
     @OnClick(R.id.file_input)
@@ -202,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
     @Override
     public void showOperationHashAlgorithmPicker(
         List<HashAlgorithm> availableHashAlgorithms,
-        HashAlgorithm operationHashAlgorithm
+        Optional<HashAlgorithm> operationHashAlgorithmContainer
     ) {
         Observable<SingleChoiceDialogFragment> observable = Observable.create(
             subscriber -> {
@@ -212,8 +261,8 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
                     items[i++] = availableHashAlgorithm.getLabel();
                 }
                 int checkedItem;
-                if (operationHashAlgorithm != null) {
-                    checkedItem = availableHashAlgorithms.indexOf(operationHashAlgorithm);
+                if (operationHashAlgorithmContainer.isPresent()) {
+                    checkedItem = availableHashAlgorithms.indexOf(operationHashAlgorithmContainer.get());
                 } else {
                     checkedItem = SingleChoiceDialogFragment.CHECKED_ITEM_NONE;
                 }
@@ -224,9 +273,74 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
                 subscriber.onNext(fragment);
             }
         );
-        observable.subscribeOn(rxSchedulers.computationThread())
-            .observeOn(rxSchedulers.mainThread())
+        observable.subscribeOn(getRxSchedulers().computationThread())
+            .observeOn(getRxSchedulers().mainThread())
             .subscribe(fragment -> fragment.show(getSupportFragmentManager(), FRAGMENT_TAG_ALGORITHM_CHOICE));
+    }
+
+    @Override
+    public void revealHashOperationStart() {
+        showHashOperationStart();
+        long animationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
+        TimeInterpolator interpolator = new AccelerateDecelerateInterpolator(this, null);
+        ObjectAnimator animateTranslationY = ObjectAnimator.ofFloat(
+            operationCard,
+            "translationY",
+            scrollView.getHeight(),
+            0
+        );
+        animateTranslationY.setDuration(animationDuration)
+            .setInterpolator(interpolator);
+        ObjectAnimator animateRotation = ObjectAnimator.ofFloat(
+            operationCard,
+            "rotation",
+            180,
+            0
+        );
+        animateRotation.setDuration(animationDuration)
+            .setInterpolator(interpolator);
+        animateTranslationY.start();
+        animateRotation.start();
+    }
+
+    @Override
+    public void showHashOperationStart() {
+        operationCard.setVisibility(View.VISIBLE);
+        operationStartButton.requestFocus(View.FOCUS_DOWN);
+    }
+
+    @OnClick(R.id.operation_start_button)
+    public void onOperationStartButtonClicked() {
+        hashOperationsMvp.presenter.onUserRequestingStartHashOperation();
+    }
+
+    @Override
+    public void updateHashOperationProgress(HashOperation hashOperation) {
+        if (operationStartButton.getVisibility() != View.GONE) {
+            operationStartButton.setVisibility(View.GONE);
+            operationProgress.setVisibility(View.VISIBLE);
+            operationProgress.setProgress(0);
+            fileInput.setEnabled(false);
+            algorithmsInput.setEnabled(false);
+        }
+        int progressBarMax = operationProgress.getMax();
+        double operationProgress = hashOperation.getProgress();
+        int displayProgress = Math.round((float) operationProgress * (float) progressBarMax);
+        this.operationProgress.setProgress(displayProgress);
+    }
+
+    @Override
+    public void showHashOperationResult(HashOperation hashOperation) {
+        operationProgress.setVisibility(View.GONE);
+        operationStartButton.setVisibility(View.GONE);
+        operationResult.setText(hashOperation.getHash());
+    }
+
+    @Override
+    public void showHashOperationError() {
+        operationProgress.setVisibility(View.GONE);
+        operationResult.setText("oops, something went wrong");
+
     }
 
     private class HashAlgorithmsMvpTriad {
@@ -236,9 +350,27 @@ public class MainActivity extends AppCompatActivity implements HashOperationView
         private final HashOperationPresenter presenter;
 
         private HashAlgorithmsMvpTriad() {
-            this.model = new HashOperationModelImpl(rxSchedulers, new HashAlgorithmsGateway());
+            HashOperationInteractor hashOperationInteractor = new HashOperationInteractor(
+                new HashOperationBoundary(getContentResolver())
+            );
+            HashOperationModelImpl model;
+            if (getObjectRetentionFragment().containsKey(RETENTION_KEY_HASH_OPERATIONS_MVP_MODEL)) {
+                model = getObjectRetentionFragment().get(RETENTION_KEY_HASH_OPERATIONS_MVP_MODEL);
+            } else {
+                model = new HashOperationModelImpl(
+                    getRxSchedulers(),
+                    new HashAlgorithmsGateway()
+                );
+                getObjectRetentionFragment().put(RETENTION_KEY_HASH_OPERATIONS_MVP_MODEL, model);
+            }
+            this.model = model;
             this.view = MainActivity.this;
-            this.presenter = new HashOperationPresenter(model, view, rxSchedulers);
+            this.presenter = new HashOperationPresenter(
+                model,
+                view,
+                hashOperationInteractor,
+                getRxSchedulers()
+            );
         }
     }
 }
