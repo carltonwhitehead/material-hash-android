@@ -37,9 +37,9 @@ public class HashOperationPresenter
     @Override
     public void start() {
         availableHashAlgorithmsSubscription = model.getAvailableHashAlgorithmsObservable()
-                .observeOn(rxSchedulers.mainThread())
-                .subscribeOn(rxSchedulers.computationThread())
-                .subscribe(this::onAvailableHashAlgorithmsFound);
+            .observeOn(rxSchedulers.mainThread())
+            .subscribeOn(rxSchedulers.computationThread())
+            .subscribe(this::onAvailableHashAlgorithmsFound);
         operationFileChangedSubscription = model.getOperationFileObservable()
             .observeOn(rxSchedulers.mainThread())
             .subscribeOn(rxSchedulers.computationThread())
